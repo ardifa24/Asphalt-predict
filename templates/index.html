@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Prediksi Kerusakan Aspal</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f8f9fa;
+        }
+
+        .container {
+            max-width: 600px;
+            margin: 50px auto;
+            background-color: #ffffff;
+            border-radius: 8px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            padding: 20px;
+            text-align: center;
+        }
+
+        h1 {
+            color: #00796b;
+        }
+
+        input[type="file"] {
+            margin: 20px 0;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+
+        button {
+            background-color: #00796b;
+            color: #ffffff;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+        }
+
+        button:hover {
+            background-color: #00574b;
+        }
+
+        .result {
+            margin-top: 30px;
+        }
+
+        .result-box {
+            border: 1px solid #00796b;
+            padding: 15px;
+            border-radius: 6px;
+            background-color: #e8f5e9;
+            text-align: left;
+        }
+
+        ul {
+            list-style: none;
+            padding: 0;
+        }
+
+        ul li {
+            background-color: #c8e6c9;
+            margin: 5px 0;
+            padding: 10px;
+            border-radius: 4px;
+        }
+
+        img {
+            max-width: 100%;
+            height: auto;
+            border: 1px solid #ddd;
+            margin-top: 20px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Prediksi Kerusakan Aspal</h1>
+        <p>Unggah gambar Aspal untuk mengetahui Kerusakan Aspal.</p>
+        <form id="uploadForm" enctype="multipart/form-data">
+            <input type="file" id="fileInput" name="file" accept="image/*">
+            <br>
+            <button type="button" id="predictButton">Prediksi</button>
+        </form>
+
+        <!-- Kontainer hasil -->
+        <div id="resultContainer" class="result" style="display: none;">
+            <h2>Hasil Prediksi</h2>
+            <div class="result-box">
+                <p><strong>Kualitas Aspal:</strong> <span id="predictedClass">-</span></p>
+                <p><strong>Probabilitas:</strong> <span id="probability">-</span>%</p>
+            </div>
+
+            <img id="uploadedImage" src="#" alt="Gambar Tanah">
+            <br>
+            <button type="button" id="resetButton">Reset</button>
+        </div>
+    </div>
+
+    <script>
+        const fileInput = document.getElementById("fileInput");
+        const predictButton = document.getElementById("predictButton");
+        const resultContainer = document.getElementById("resultContainer");
+        const predictedClassSpan = document.getElementById("predictedClass");
+        const probabilitySpan = document.getElementById("probability");
+        const uploadedImage = document.getElementById("uploadedImage");
+        const resetButton = document.getElementById("resetButton");
+
+        predictButton.addEventListener("click", () => {
+            const file = fileInput.files[0];
+            if (!file) {
+                alert("Silakan pilih file gambar terlebih dahulu.");
+                return;
+            }
+
+            const formData = new FormData();
+            formData.append("file", file);
+
+            fetch("/predict", {
+                method: "POST",
+                body: formData
+            })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.error) {
+                        alert(data.error);
+                        return;
+                    }
+
+                    // Tampilkan hasil prediksi
+                    predictedClassSpan.textContent = data.predicted_class;
+                    probabilitySpan.textContent = (data.probability * 100).toFixed(2);
+
+                    // Tampilkan gambar yang diunggah
+                    const reader = new FileReader();
+                    reader.onload = (e) => {
+                        uploadedImage.src = e.target.result;
+                    };
+                    reader.readAsDataURL(file);
+
+                    // Tampilkan kontainer hasil
+                    resultContainer.style.display = "block";
+                })
+                .catch(error => console.error("Error:", error));
+        });
+
+        resetButton.addEventListener("click", () => {
+            // Reset formulir
+            fileInput.value = "";
+            resultContainer.style.display = "none"; // Sembunyikan kontainer hasil
+            predictedClassSpan.textContent = "-";
+            probabilitySpan.textContent = "-";
+            uploadedImage.src = "#"; // Reset gambar unggah
+
+            // Scroll kembali ke atas
+            window.scrollTo({
+                top: 0,
+                behavior: "smooth"
+            });
+        });
+    </script>
+</body>
+</html>
